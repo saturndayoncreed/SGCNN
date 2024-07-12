@@ -94,5 +94,17 @@ def data_preparation(X):
                 except:
                     print(X[i])
 
+        # Modify -1 values to 0 in bonds_surface_index1
+    bonds_surface_index1[bonds_surface_index1 == -1] = 0
+
+    # Modify -1 values to 0 in bonds_surface_index2
+    bonds_surface_index2[bonds_surface_index2 == -1] = 0
+
+    # Modify -1 values to 0 in bonds_bulk_index1
+    bonds_bulk_index1[bonds_bulk_index1 == -1] = 0
+
+    # Modify -1 values to 0 in bonds_bulk_index2
+    bonds_bulk_index2[bonds_bulk_index2 == -1] = 0
+
     return atom_number_bulk,  atoms_bulk, bonds_bulk, bonds_bulk_index1, bonds_bulk_index2, atom_num_bulk, bond_number_bulk, \
            atom_number_surface, atoms_surface, bonds_surface, bonds_surface_index1, bonds_surface_index2, atom_num_surface, bond_number_surface
