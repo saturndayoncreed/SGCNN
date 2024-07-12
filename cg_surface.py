@@ -5,7 +5,7 @@ from encoding import *
 
 Surface_min_distance = 100
 
-def unit_cell_expansion_slab(lattices, matrix):
+def unit_cell_expansion_slab(self, lattices, matrix):
     num = len(lattices)
     expanded_lattices = np.zeros([3,num*9],dtype=np.float32)
     coeff = [0, -1, 1]
@@ -23,7 +23,7 @@ def unit_cell_expansion_slab(lattices, matrix):
             count = count + 1
     return expanded_lattices
 
-def find_neighbor(lattices, expanded_lattices, elements):
+def find_neighbor(self, lattices, expanded_lattices, elements):
     lattice_num = len(lattices[0])
     expanded_lattice_num = len(expanded_lattices[0])
     connectivity = []
@@ -47,7 +47,7 @@ def find_neighbor(lattices, expanded_lattices, elements):
 
     return connectivity, distances
 
-def bond_construction(elements,connectivity,distances, features, CATEGORY_NUM, TOTAL_CATEGORY_NUM, NEIGHBOR_CATEGORY_NUM):
+def bond_construction(self, elements,connectivity,distances, features, CATEGORY_NUM, TOTAL_CATEGORY_NUM, NEIGHBOR_CATEGORY_NUM):
     BOND_CATEGORY_NUM = TOTAL_CATEGORY_NUM - 2 * CATEGORY_NUM
 
     bond_vectors = []
@@ -72,7 +72,10 @@ def bond_construction(elements,connectivity,distances, features, CATEGORY_NUM, T
 
     return bond_vectors, neighbor_indices
 
-def poscar_to_graph(name):
+def split(self, param):
+    return param.split('-')
+
+def poscar_to_graph(self, name):
     """This function converts POSCAR file to graph structure."""
     
     ads_type, sys = name.split('-')[0:2]
@@ -135,8 +138,10 @@ def poscar_to_graph(name):
         atoms = np.zeros([total_atom_num, 3],dtype=np.float32)
     
         current_atom_num = 0
+        print('total atom num :', total_atom_num)
         while current_atom_num < total_atom_num:
             line = poscarfile.readline()
+            print(line)
             if line.split()[4] == 'F':
                 continue
             elif line.split()[4] =='T':
@@ -144,16 +149,16 @@ def poscar_to_graph(name):
                 current_atom_num += 1
 
     lattices = np.transpose(np.matmul(atoms, trans_matrix))
-    expanded_lattices = unit_cell_expansion_slab(atoms, trans_matrix)
+    expanded_lattices = self.unit_cell_expansion_slab(atoms, trans_matrix)
 
-    connectivity, distances = find_neighbor(lattices, expanded_lattices, elements)
+    connectivity, distances = self.find_neighbor(lattices, expanded_lattices, elements)
 
     atom_vectors = np.zeros([total_atom_num, CATEGORY_NUM], dtype=np.float32)
     bond_num = np.zeros([total_atom_num],dtype=np.int32)
     for i in range(total_atom_num):
         atom_vectors[i] = atom_encoding(elements[i])
 
-    bond_vectors, neighbor_indices = bond_construction(elements,connectivity,distances, features, CATEGORY_NUM, TOTAL_CATEGORY_NUM, NEIGHBOR_CATEGORY_NUM)
+    bond_vectors, neighbor_indices = self.bond_construction(elements,connectivity,distances, features, CATEGORY_NUM, TOTAL_CATEGORY_NUM, NEIGHBOR_CATEGORY_NUM)
 
     for i in range(len(bond_vectors)):
         bond_num[i] = bond_vectors[i].shape[0]
