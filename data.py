@@ -1,32 +1,33 @@
-import cg_surface as surface
 import cg_bulk as bulk
-import numpy as np
+import cg_surface as surface
 from encoding import *
 
 """ This is where input graph structures are mathematically converted to 
     vector format."""
 
+
 def data_preparation(X):
     data_num = len(X)
 
-    #fix atom, bulk number
-    atom_number_bulk = 4
-    bond_number_bulk = 18
+    bulk_instance = bulk.bulk()
 
-    # atom_number_bulk = 0
-    # bond_number_bulk = 0
-    #
-    # for i in range(data_num):
-    #     atom_vectors_bulk, bond_vectors_bulk, neighbor_bulk_index = Bulk.poscar_to_graph(X[i])
-    #     n = atom_vectors_bulk.shape[0]
-    #     m = 0
-    #     if atom_number_bulk < n:
-    #         atom_number_bulk = n
-    #     for j in range(n):
-    #
-    #         m = bond_vectors_bulk[j].shape[0]
-    #         if bond_number_bulk < m:
-    #             bond_number_bulk = m
+    # fix atom, bulk number
+    # atom_number_bulk = 4
+    # bond_number_bulk = 18
+
+    atom_number_bulk = 0
+    bond_number_bulk = 0
+
+    for i in range(data_num):
+        atom_vectors_bulk, bond_vectors_bulk, neighbor_bulk_index = bulk_instance.poscar_to_graph(X[i])
+        n = atom_vectors_bulk.shape[0]
+        m = 0
+        if atom_number_bulk < n:
+            atom_number_bulk = n
+        for j in range(n):
+            m = bond_vectors_bulk[j].shape[0]
+            if bond_number_bulk < m:
+                bond_number_bulk = m
     print("bulk : (atom,  bond) : ", atom_number_bulk, bond_number_bulk)
 
     atoms_bulk = np.zeros([data_num, atom_number_bulk, CATEGORY_NUM], dtype=np.int32)
@@ -38,7 +39,7 @@ def data_preparation(X):
     atom_num_bulk = np.zeros([data_num], dtype=np.int32)
 
     for i in range(data_num):
-        atom_vectors_bulk, bond_vectors_bulk, neighbor_bulk_index = bulk.poscar_to_graph(X[i])
+        atom_vectors_bulk, bond_vectors_bulk, neighbor_bulk_index = bulk_instance.poscar_to_graph(X[i])
         n = atom_vectors_bulk.shape[0]
         atoms_bulk[i][:n] = atom_vectors_bulk
         atom_num_bulk[i] = n
@@ -48,28 +49,27 @@ def data_preparation(X):
             for k in range(m):
                 bonds_bulk[i][j][k] = bond_vectors_bulk[j][k]
 
-                bonds_bulk_index1[i][j][k] = neighbor_bulk_index[j][k][0] + i*atom_number_bulk
-                bonds_bulk_index2[i][j][k] = neighbor_bulk_index[j][k][1] + i*atom_number_bulk
+                bonds_bulk_index1[i][j][k] = neighbor_bulk_index[j][k][0] + i * atom_number_bulk
+                bonds_bulk_index2[i][j][k] = neighbor_bulk_index[j][k][1] + i * atom_number_bulk
 
-    atom_number_surface = 19
-    bond_number_surface = 18
+    # atom_number_surface = 19
+    # bond_number_surface = 18
 
-    # atom_number_surface = 0
-    # bond_number_surface = 0
-    #
-    # for i in range(data_num):
-    #     atom_vectors_surface, bond_vectors_surface, neighbor_surface_index = Surface.poscar_to_graph(X[i])
-    #     n = atom_vectors_surface.shape[0]
-    #     m = 0
-    #     if atom_number_surface < n:
-    #         atom_number_surface = n
-    #     for j in range(n):
-    #
-    #         m = bond_vectors_surface[j].shape[0]
-    #
-    #         if bond_number_surface < m:
-    #             bond_number_surface = m
+    surface_instance = surface.surface()
 
+    atom_number_surface = 0
+    bond_number_surface = 0
+
+    for i in range(data_num):
+        atom_vectors_surface, bond_vectors_surface, neighbor_surface_index = surface_instance.poscar_to_graph(X[i])
+        n = atom_vectors_surface.shape[0]  # total_atom_number
+        m = 0
+        if atom_number_surface < n:
+            atom_number_surface = n
+        for j in range(n):
+            m = bond_vectors_surface[j].shape[0]
+            if bond_number_surface < m:
+                bond_number_surface = m
     print("surface : (atom, bond) : ", atom_number_surface, bond_number_surface)
 
     atoms_surface = np.zeros([data_num, atom_number_surface, CATEGORY_NUM], dtype=np.int32)
@@ -79,22 +79,22 @@ def data_preparation(X):
     atom_num_surface = np.zeros(data_num, dtype=np.int32)
 
     for i in range(data_num):
-        atom_vectors_surface, bond_vectors_surface, neighbor_surface_index = surface.poscar_to_graph(X[i])
+        atom_vectors_surface, bond_vectors_surface, neighbor_surface_index = surface_instance.poscar_to_graph(X[i])
         n = atom_vectors_surface.shape[0]
         atoms_surface[i][:n] = atom_vectors_surface
         atom_num_surface[i] = n
         for j in range(n):
             m = bond_vectors_surface[j].shape[0]
             for k in range(m):
-                #bonds_surface[i][j][k] = np.concatenate([atom_vectors_surface[j], bond_vectors_surface[j][k]])  ## 수정
+                # bonds_surface[i][j][k] = np.concatenate([atom_vectors_surface[j], bond_vectors_surface[j][k]])  # 수정
                 try:
                     bonds_surface[i][j][k] = bond_vectors_surface[j][k]
                     bonds_surface_index1[i][j][k] = neighbor_surface_index[j][k][0] + i * atom_number_surface
                     bonds_surface_index2[i][j][k] = neighbor_surface_index[j][k][1] + i * atom_number_surface
-                except:
+                except(Exception,):
                     print(X[i])
 
-        # Modify -1 values to 0 in bonds_surface_index1
+    # Modify -1 values to 0 in bonds_surface_index1
     bonds_surface_index1[bonds_surface_index1 == -1] = 0
 
     # Modify -1 values to 0 in bonds_surface_index2
@@ -106,5 +106,6 @@ def data_preparation(X):
     # Modify -1 values to 0 in bonds_bulk_index2
     bonds_bulk_index2[bonds_bulk_index2 == -1] = 0
 
-    return atom_number_bulk,  atoms_bulk, bonds_bulk, bonds_bulk_index1, bonds_bulk_index2, atom_num_bulk, bond_number_bulk, \
-           atom_number_surface, atoms_surface, bonds_surface, bonds_surface_index1, bonds_surface_index2, atom_num_surface, bond_number_surface
+    return (atom_number_bulk, atoms_bulk, bonds_bulk, bonds_bulk_index1, bonds_bulk_index2,
+            atom_num_bulk, bond_number_bulk, atom_number_surface, atoms_surface, bonds_surface,
+            bonds_surface_index1, bonds_surface_index2, atom_num_surface, bond_number_surface)
